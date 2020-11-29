@@ -1,2 +1,2 @@
-# categorical_encoder
-Categorical encoder for sklearn pipeline
+# Categorical Encoder
+Covenient categorical encoder for sklearn pipeline. Avoid pipeline ramifications!
