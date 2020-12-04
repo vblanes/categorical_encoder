@@ -3,13 +3,20 @@ import pandas as pd
 
 class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
-    def __init__(self, columns, missing_value=-1):
+    IGNORE_STRATEGY = 'ignore'
+    REPLACE_STRATEGY = 'replace'
+    MISSING_SELF = 'self'
+
+    def __init__(self, columns, missing_value=-1, null_strategy='ignore'):
         # list of dictionaries, one per column
         self.translators = {}
         # list of strings (columname)
         self.columns = columns
         self.fit_ = False
         self.missing_value = missing_value
+        if not null_strategy.lower() in {self.IGNORE_STRATEGY, self.REPLACE_STRATEGY}:
+            raise Exception(f"Null strategy should be '{self.IGNORE_STRATEGY}' or '{self.REPLACE_STRATEGY}'")
+        self.null_strategy = null_strategy
 
     # TODO add support for numpy arrays, noy only pandas dataframes
     def fit(self, df, y=None):
@@ -43,8 +50,11 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             # transform elements 1 by 1
             # TODO use apply instead of 1 be 1 transformation
             for element in lst:
-                if element in self.dicts[ind]:
-                    new_col.append(self.dicts[ind][element])
+                if element in self.translators[col]:
+                    new_col.append(self.translators[col][element])
+                # when transforming a null
+                elif (pd.isnull(element) and self.null_strategy == self.IGNORE_STRATEGY) or self.missing_value == self.MISSING_SELF:
+                    new_col.append(element)
                 else:
                     new_col.append(self.missing_value)
             # insert this new column in the df
